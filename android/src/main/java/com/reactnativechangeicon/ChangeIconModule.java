@@ -85,6 +85,10 @@ public class ChangeIconModule extends ReactContextBaseJavaModule implements Appl
                     new ComponentName(this.packageName, activeClass),
                     PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                     PackageManager.DONT_KILL_APP);
+            activity.getPackageManager().setComponentEnabledSetting(
+                    new ComponentName(this.packageName, activeClassDefault),
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP);
             promise.resolve(newIconName);
         } catch (Exception e) {
             promise.reject("ANDROID:ICON_INVALID");
