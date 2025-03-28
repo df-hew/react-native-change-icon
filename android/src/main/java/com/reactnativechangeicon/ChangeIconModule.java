@@ -17,6 +17,8 @@ import com.facebook.react.module.annotations.ReactModule;
 import java.util.HashSet;
 import java.util.Set;
 
+import android.content.Intent;
+
 @ReactModule(name = "ChangeIcon")
 public class ChangeIconModule extends ReactContextBaseJavaModule implements Application.ActivityLifecycleCallbacks {
     public static final String NAME = "ChangeIcon";
@@ -24,10 +26,12 @@ public class ChangeIconModule extends ReactContextBaseJavaModule implements Appl
     private final Set<String> classesToKill = new HashSet<>();
     private Boolean iconChanged = false;
     private String componentClass = "";
+    private ReactApplicationContext reactContext;
 
     public ChangeIconModule(ReactApplicationContext reactContext, String packageName) {
         super(reactContext);
         this.packageName = packageName;
+        this.reactContext = reactContext;
     }
 
     @Override
@@ -109,6 +113,9 @@ public class ChangeIconModule extends ReactContextBaseJavaModule implements Appl
         this.componentClass = activeClass;
         activity.getApplication().registerActivityLifecycleCallbacks(this);
         iconChanged = true;
+        Intent newIconIntent = Intent.makeMainActivity(new ComponentName(this.packageName, activeClass));
+        newIconIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        this.reactContext.startActivity(newIconIntent);
     }
 
     private void completeIconChange() {
