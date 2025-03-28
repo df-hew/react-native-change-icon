@@ -14,16 +14,15 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import java.util.ArrayList;
+import java.util.List;
 import android.content.Intent;
 
 @ReactModule(name = "ChangeIcon")
 public class ChangeIconModule extends ReactContextBaseJavaModule implements Application.ActivityLifecycleCallbacks {
     public static final String NAME = "ChangeIcon";
     private final String packageName;
-    private final Set<String> classesToKill = new HashSet<>();
+    private final List<String> classesToKill = new ArrayList<>();
     private Boolean iconChanged = false;
     private String componentClass = "";
     private ReactApplicationContext reactContext;
@@ -76,21 +75,7 @@ public class ChangeIconModule extends ReactContextBaseJavaModule implements Appl
         }
 
         final String newIconName = (iconName == null || iconName.isEmpty()) ? "Default" : iconName;
-
-        final String oldIconName = (newIconName == "Default") ? "Session" : "Default";
-        
-        String activeClass = this.packageName + ".MainActivity" + newIconName;
-
-        String activeClassDefault = this.packageName + ".MainActivity" + oldIconName;
-        
-        if (activeClass.contains(".staging.")) {
-            activeClass = activeClass.replace(".staging.", ".");
-        }
-
-        if (activeClassDefault.contains(".staging.")) {
-            activeClassDefault = activeClassDefault.replace(".staging.", ".");
-        }
-        
+        final String activeClass = this.packageName + ".MainActivity" + newIconName;
         if (this.componentClass.equals(activeClass)) {
             promise.reject("ANDROID:ICON_ALREADY_USED:" + this.componentClass);
             return;
@@ -99,10 +84,6 @@ public class ChangeIconModule extends ReactContextBaseJavaModule implements Appl
             activity.getPackageManager().setComponentEnabledSetting(
                     new ComponentName(this.packageName, activeClass),
                     PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP);
-            activity.getPackageManager().setComponentEnabledSetting(
-                    new ComponentName(this.packageName, activeClassDefault),
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                     PackageManager.DONT_KILL_APP);
             promise.resolve(newIconName);
         } catch (Exception e) {
@@ -113,6 +94,7 @@ public class ChangeIconModule extends ReactContextBaseJavaModule implements Appl
         this.componentClass = activeClass;
         activity.getApplication().registerActivityLifecycleCallbacks(this);
         iconChanged = true;
+        activity.finish();
         Intent newIconIntent = Intent.makeMainActivity(new ComponentName(this.packageName, activeClass));
         newIconIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         this.reactContext.startActivity(newIconIntent);
@@ -124,8 +106,6 @@ public class ChangeIconModule extends ReactContextBaseJavaModule implements Appl
         final Activity activity = getCurrentActivity();
         if (activity == null)
             return;
-        
-        classesToKill.remove(componentClass);
         classesToKill.forEach((cls) -> activity.getPackageManager().setComponentEnabledSetting(
                 new ComponentName(this.packageName, cls),
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
